@@ -18,6 +18,8 @@ namespace FormsApp.Models
 
         [Display(Name = "Aktif mi?")]
         public bool IsActive { get; set; }
+        [Display(Name = "Kategorisi")]
+
         public int CategoryId { get; set; }
     }
 }
