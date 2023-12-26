@@ -40,8 +40,15 @@ namespace FormsApp.Controllers
         [HttpPost]
         public IActionResult Create(Product model)
         {
-            Repository.CreateProduct(model);
-            return RedirectToAction("Index");
+            if (ModelState.IsValid)
+            {
+                model.ProductId = Repository.Products.Count + 1;
+                Repository.CreateProduct(model);
+                return RedirectToAction("Index");
+            }
+
+            ViewBag.Categories = new SelectList(Repository.Categories, "CategoryId", "Name");
+            return View(model);
         }
     }
 }
