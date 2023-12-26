@@ -18,7 +18,7 @@ namespace FormsApp.Controllers
             if (!String.IsNullOrEmpty(searchString))
             {
                 ViewBag.SearchString = searchString;
-                products = products.Where(p => p.Name.ToLower().Contains(searchString)).ToList();
+                products = products.Where(p => p.Name!.ToLower().Contains(searchString)).ToList();
             }
             if (!String.IsNullOrEmpty(category) && category != "0")
             {
@@ -38,10 +38,28 @@ namespace FormsApp.Controllers
             return View();
         }
         [HttpPost]
-        public IActionResult Create(Product model)
+        public async Task<IActionResult> Create(Product model, IFormFile imageFile)
         {
+            var allowedExtensions = new[] { ".jpg", ".jpeg", ".png" };
+            var extension = Path.GetExtension(imageFile.FileName); //abc.jpg => .jpg take it
+            var randomFileName = String.Format($"{Guid.NewGuid().ToString()}{extension}");
+            var path = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/img", randomFileName);
+
+            if (imageFile != null)
+            {
+                if (!allowedExtensions.Contains(extension))
+                {
+                    ModelState.AddModelError("", "Geçerli bir resim seçiniz.");
+                }
+            }
+
             if (ModelState.IsValid)
             {
+                using (var stream = new FileStream(path, FileMode.Create))
+                {
+                    await imageFile.CopyToAsync(stream);
+                }
+                model.Image = randomFileName;
                 model.ProductId = Repository.Products.Count + 1;
                 Repository.CreateProduct(model);
                 return RedirectToAction("Index");
@@ -50,5 +68,17 @@ namespace FormsApp.Controllers
             ViewBag.Categories = new SelectList(Repository.Categories, "CategoryId", "Name");
             return View(model);
         }
+
+        public IActionResult Edit(int? id)
+        {
+            ViewBag.Categories = new SelectList(Repository.Categories, "CategoryId", "Name");
+            return View();
+        }
+        [HttpPost]
+        public IActionResult Edit()
+        {
+            return View();
+        }
+
     }
 }

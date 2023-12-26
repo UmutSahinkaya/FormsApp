@@ -20,7 +20,7 @@ namespace FormsApp.Models
         public decimal Price { get; set; }
 
         [Display(Name = "Resmi")]
-        [Required(ErrorMessage = "{0} boş geçilmemelidir.")]
+        //[Required(ErrorMessage = "{0} boş geçilmemelidir.")]
         public string Image { get; set; } = string.Empty;
 
         [Display(Name = "Aktif mi?")]
