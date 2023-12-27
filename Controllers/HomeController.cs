@@ -134,7 +134,7 @@ namespace FormsApp.Controllers
         {
             foreach (var product in Products)
             {
-                Repository.EditProduct(product);
+                Repository.EditProductIsActive(product);
             }
             return RedirectToAction("Index");
         }
