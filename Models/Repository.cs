@@ -48,6 +48,13 @@
                 entity.Image= updatedProduct.Image;
             }
         }
-
+        public static void DeleteProduct(Product model)
+        {
+            var entity = _products.FirstOrDefault(p => p.ProductId == model.ProductId);
+            if(entity != null)
+            {
+                _products.Remove(entity);
+            }
+        }
     }
 }
