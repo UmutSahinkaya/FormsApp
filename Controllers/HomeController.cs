@@ -2,6 +2,7 @@ using FormsApp.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using System.Diagnostics;
+using System.IO;
 
 namespace FormsApp.Controllers
 {
@@ -41,10 +42,7 @@ namespace FormsApp.Controllers
         public async Task<IActionResult> Create(Product model, IFormFile imageFile)
         {
             var allowedExtensions = new[] { ".jpg", ".jpeg", ".png" };
-            var extension = Path.GetExtension(imageFile.FileName); //abc.jpg => .jpg take it
-            var randomFileName = String.Format($"{Guid.NewGuid().ToString()}{extension}");
-            var path = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/img", randomFileName);
-
+            var extension = "";
             if (imageFile != null)
             {
                 if (!allowedExtensions.Contains(extension))
@@ -55,14 +53,20 @@ namespace FormsApp.Controllers
 
             if (ModelState.IsValid)
             {
-                using (var stream = new FileStream(path, FileMode.Create))
+                if (imageFile != null)
                 {
-                    await imageFile.CopyToAsync(stream);
+                    extension = Path.GetExtension(imageFile.FileName); //abc.jpg => .jpg take it
+                    var randomFileName = String.Format($"{Guid.NewGuid().ToString()}{extension}");
+                    var path = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/img", randomFileName);
+                    using (var stream = new FileStream(path, FileMode.Create))
+                    {
+                        await imageFile.CopyToAsync(stream);
+                    }
+                    model.Image = randomFileName;
+                    model.ProductId = Repository.Products.Count + 1;
+                    Repository.CreateProduct(model);
+                    return RedirectToAction("Index");
                 }
-                model.Image = randomFileName;
-                model.ProductId = Repository.Products.Count + 1;
-                Repository.CreateProduct(model);
-                return RedirectToAction("Index");
             }
 
             ViewBag.Categories = new SelectList(Repository.Categories, "CategoryId", "Name");
@@ -71,13 +75,38 @@ namespace FormsApp.Controllers
 
         public IActionResult Edit(int? id)
         {
+            if(id == null)
+                return NotFound();
+            var entity = Repository.Products.FirstOrDefault(x => x.ProductId == id);
+            if(entity==null) 
+                return NotFound();
             ViewBag.Categories = new SelectList(Repository.Categories, "CategoryId", "Name");
-            return View();
+            return View(entity);
         }
         [HttpPost]
-        public IActionResult Edit()
+        public async Task<IActionResult> Edit(int id ,Product model,IFormFile? imageFile)
         {
-            return View();
+            if(id != model.ProductId)
+                return NotFound();
+            if(ModelState.IsValid)
+            {
+                if (imageFile != null)
+                {
+                    var allowedExtensions = new[] { ".jpg", ".jpeg", ".png" };
+                    var extension = Path.GetExtension(imageFile.FileName); //abc.jpg => .jpg take it
+                    var randomFileName = String.Format($"{Guid.NewGuid().ToString()}{extension}");
+                    var path = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/img", randomFileName);
+                    using (var stream = new FileStream(path, FileMode.Create))
+                    {
+                        await imageFile.CopyToAsync(stream);
+                    }
+                    model.Image = randomFileName;
+                }
+                Repository.EditProduct(model);
+                return RedirectToAction("Index");
+            }
+            ViewBag.Categories = new SelectList(Repository.Categories, "CategoryId", "Name");
+            return View(model);
         }
 
     }
